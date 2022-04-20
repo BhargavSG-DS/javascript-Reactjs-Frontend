@@ -1,12 +1,13 @@
-# creating a blockchain 
+# going to shifted to fastapi framework soon
 
+# importing required modules
+from flask import Flask, jsonify
 import datetime
 import hashlib
 import json
-from flask import Flask, jsonify
 from werkzeug.wrappers import response
 
-# part 1 - structuring a blockchain
+# Blockchain structure
 
 class Blockchain:
     def __init__(self):
@@ -28,17 +29,19 @@ class Blockchain:
         new_proof = 1
         check_proof = False
         while check_proof is False:
-            hash_operartion = hashlib.sha256(str(new_proof**2 - prev_proof**2).encode()).hexdigest()
-            if hash_operartion[:4] == '0000':
+            _operartion = hashlib.sha256(str(new_proof**2 - prev_proof**2).encode()).hexdigest()
+            if _operartion[:4] == '0000':
                 check_proof = True
             else:
                 new_proof+=1
         return new_proof
     
+    # Hashing class-method to encrypt transactions
     def hash(self, block):
         encoded_block = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(encoded_block).hexdigest()
-
+    
+    # Validation class-method to 
     def isChain_valid(self, chain):
         prev_block = chain[0]
         block_index = 1
@@ -48,16 +51,16 @@ class Blockchain:
                 return False
             prev_proof = prev_block['proof']
             proof = block['proof']
-            hash_operartion = hashlib.sha256(str(proof**2 - prev_proof**2).encode()).hexdigest()
-            if hash_operartion[:4] != '0000':
+            _operartion = hashlib.sha256(str(proof**2 - prev_proof**2).encode()).hexdigest()
+            if _operartion[:4] != '0000':
                 return False
             prev_block = block
             block_index += 1
         return True
        
-# part 2 - minining a block
+# Block mining apis
 
-# 2.1 Creating a web app for exploring our block chain
+Creating a web app for exploring our block chain
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
@@ -89,8 +92,8 @@ def if_valid():
         response = {'message' : 'The chain is not intact'}
     return jsonify(response), 200
 
-# 2.2 Creating a block chain
+# Initialize a block chain
 blockchain = Blockchain()
 
-# Running the app
+# Starting the App in local host with debug to reload on changes
 app.run(host='0.0.0.0',port=8000,debug=True)
