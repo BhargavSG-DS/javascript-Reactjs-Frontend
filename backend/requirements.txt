@@ -1,0 +1,14 @@
+fastapi # The fastapi framework
+fastapi-mail # alternative is fastapi-mailman to send async mail from backend
+SqlAlchemy # to connect to databases
+bcrypt # to salt and hash passwords to protect user privacy
+pydantic # to create class model for database models and response and control user info
+uvicorn # for local developer server to test and debug app
+tortoise-orm # object relational mapping for accessing database models in an object oriented form
+passlib # passlib to automate password encrytion and password verification
+pyjwt # to create jwt token for user registeration and login for an extra layer of protection
+python-dotenv # to hide and access Top secret credentials
+fastapi-pagination # to limit and create api product pagitaion to access limited products in one page
+pillow # to control image format and edit to control server storage use
+python-multipart 
+aiofiles 

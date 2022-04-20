@@ -1,0 +1,6 @@
+# ignore .env files
+*.env
+# ignore all files in /directory
+/backend/static
+/frontend
+/Project
