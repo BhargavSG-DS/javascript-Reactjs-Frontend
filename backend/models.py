@@ -20,7 +20,6 @@ class User(Model):
     phone = fields.CharField(max_length=10, null = False)
     date_created = fields.DateField(auto_now=True,default=datetime.today)
     trust_score = fields.SmallIntField(default=0)
-    cart = fields.ForeignKeyField(model_name="models.Product")
     
     # Setting valid input for rating/trust_score
     @validator('trust_score')
@@ -42,8 +41,7 @@ class Product(Model):
     discount = fields.DecimalField(max_digits=2, decimal_places=0,default=0)
     date_uploaded = fields.DateField(auto_now=True,default=datetime.today)
     category = fields.CharField(max_length=20, null = False)
-    user = fields.ForeignKeyField("models.User", related_name="products")
-    # category = fields.ForeignKeyField("models.Category", related_name="products")
+    seller = fields.ForeignKeyField("models.User", related_name="products",on_delete='CASCADE')
 
     # Setting valid input for fit
     @validator('fit')
@@ -65,16 +63,10 @@ class Product(Model):
         if material.lower() not in ['cotton','rayon','nylon','wool','polyester','silk','denim']:
             raise ValueError('Material not regonized')
         return material
-
-# class Category(Model):
-#     id = fields.IntField(pk =True,index=True)
-#     category = fields.CharField(max_length=20, null = False)
-#     product = fields.ForeignKeyField()
-
-       
+     
 user_pydantic = pydantic_model_creator(User, name= "User", exclude =("is_verified",))
 user_pydanticIn = pydantic_model_creator(User, name= "UserIn", exclude_readonly=True, exclude =("id","is_verified", "date_created", "trust_score", "profile_pic",))
 user_pydanticOut = pydantic_model_creator(User, name="UserOut",exclude=("password",))
 
 product_pydantic = pydantic_model_creator(Product, name = "Product")
-product_pydanticIn = pydantic_model_creator(Product, name = "ProductIn", exclude_readonly=True,exclude =("user","cover","id"))
+product_pydanticIn = pydantic_model_creator(Product, name = "ProductIn", exclude_readonly=True,exclude =("seller","cover","id"))

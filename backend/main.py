@@ -55,7 +55,7 @@ async def sign_Up(user : user_pydanticIn):
     user_info = user.dict(exclude_unset=True)
     user_info["password"] = hash_password(user_info["password"])
     user_obj = await User.create(**user_info)
-    new_user = await user_pydantic.from_queryset(user_obj)
+    new_user = await user_pydantic.from_tortoise_orm(user_obj)
     await send_verification([user_info['email']],user_info)
     return{
         "data" : f"Welcome to Filthrift, {new_user.username}, Thanks for Choosing Our Services, Please Verify your Email."
@@ -130,12 +130,12 @@ async def upload_profile(file:UploadFile = File(...),user: user_pydantic = Depen
         
     return {'detail' : 'Profile Picture set'}
 
-# Deleting user detail
+# Deleting User 
 @app.delete("/user/remove",tags=['User'],status_code=HTTPStatus.ACCEPTED)
 async def delete_profile(user : user_pydanticIn = Depends(get_current_user)):
-    _user = await user_pydantic.from_queryset(User.get(username=user.username))
-    if _user['username'] == user.username:
-        User.delete(username=_user['username'])
+    _user = await User.get(username=user.username)
+    if _user.username == user.username:
+        await user.delete()
         return{
             "data" : "Your Profile Has been removed, Sorry to see you go."
         }
@@ -144,18 +144,6 @@ async def delete_profile(user : user_pydanticIn = Depends(get_current_user)):
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="You are not Authorized to perform this action.",
         )
-
-# Update user details
-@app.put("/user/update",tags=['User'],status_code=HTTPStatus.ACCEPTED)
-async def change_profile(user : user_pydanticIn = Depends(get_current_user)):
-    user_info = user.dict(exclude_unset=True)
-    user_info["password"] = hash_password(user_info["password"])
-    user_obj = await User.update_from_dict(**user_info)
-    updated_user = await user_pydantic.from_queryset(user_obj)
-    
-    return{
-        "data" : f"Your Profile Has been updated, {updated_user.username}."
-    }
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -166,8 +154,8 @@ async def product_upload(product : product_pydanticIn, user : user_pydanticIn = 
     
     # Avoiding ZeroDivisionError
     if product["price"] > 0:
-        product_obj = await Product.create(**product, user = user)
-        product_obj = await product_pydantic.from_queryset(product_obj)
+        product_obj = await Product.create(**product, seller = user)
+        product_obj = await product_pydantic.from_tortoise_orm(product_obj)
         
         return {'data' : product_obj}
     
@@ -193,8 +181,8 @@ async def get_products(category: str | None = None):
 
 @app.get('/product/{id}/info',tags=['Products'],status_code=HTTPStatus.OK)
 async def get_product_by_id(id : int):
-    item = await product_pydantic.from_queryset(Product.get(id=id))
-    seller = await product_pydantic.from_queryset_single(Product.get(id = item["user"]))
+    item = await product_pydantic.from_queryset_single(Product.get(id=id))
+    seller = await product_pydantic.from_queryset_single(Product.get(id = item["seller"]))
     return {
         "data" : {
             "product_details" : item,
@@ -211,9 +199,9 @@ async def get_product_by_id(id : int):
 @app.delete('/product/{id}/remove',tags=['Products'],status_code=HTTPStatus.OK)
 async def product_remove(id: int,user : user_pydanticIn = Depends(get_current_user)):
     item = await Product.get(id=id)
-    seller = await product_pydantic.from_queryset_single(Product.get(id = item["user"]))
+    seller = await product_pydantic.from_queryset_single(Product.get(id = item["seller"]))
     
-    if user.username == seller['username']:
+    if user.username == seller:
         item.delete()    
     else:
         raise HTTPException(
@@ -249,7 +237,7 @@ async def upload_product_image(id: int, file: UploadFile = File (...),user : use
     file.close()
     
     product = await Product.get(id = id)
-    owner = await product.user
+    owner = await product.seller
     
     if owner.username == user.username:
         product.cover = file_name
@@ -266,7 +254,8 @@ async def upload_product_image(id: int, file: UploadFile = File (...),user : use
 # Register Models
 register_tortoise(
     app,
-    db_url = "sqlite://database.sqlite3",
+    db_url = "sqlite://database.sqlite3", # for sqlite (recommended to only use during developement)
+    # db_url =  f"postgres://postgres:{credentials['PGREPASS']}@localhost:5432/filthrift", # for postgreSql (for deployment)
     modules={"models" : ["models"]},
     generate_schemas=True,
     add_exception_handlers=True,
