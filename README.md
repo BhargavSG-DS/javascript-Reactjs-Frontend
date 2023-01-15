@@ -1,2 +1,2 @@
-# Javascript-Reactjs-Frontend
-FrontEnd Scripts in Javascript's React Library
+# React - Scripts
+Frontend Scripts in Javascript's React Library
